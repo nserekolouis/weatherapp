@@ -1,13 +1,16 @@
 package com.example.weatherapp.ui.home
 
-import CryptocurrencyAdapter
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.RequiresApi
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -16,9 +19,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.weatherapp.R
 import com.example.weatherapp.databinding.FragmentHomeBinding
 import com.example.weatherapp.location.LocationViewModel
-import com.example.weatherapp.weather.adapter.ForecastAdapter
+import com.example.weatherapp.adapter.ForecastAdapter
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 
 private const val TAG = "HomeFragment"
@@ -26,61 +33,59 @@ private const val TAG = "HomeFragment"
 @AndroidEntryPoint
 class HomeFragment : Fragment() {
 
-    private lateinit var homeViewModel: HomeViewModel
-    private var _binding: FragmentHomeBinding? = null
-
-
-
-    //location
+    /* LocationViewModel */
     private lateinit var locationViewModel: LocationViewModel
 
-    //controls
-    //private lateinit var longtitude: TextView
-    //private lateinit var latitude: TextView
-    //private lateinit var info: TextView
+    /* Fragment binding */
+    private var _binding: FragmentHomeBinding? = null
 
-    //current weather controls
+    /* Weather controls*/
+    private lateinit var tv_date: TextView
+    private lateinit var tv_location: TextView
     private lateinit var tv_temp: TextView
     private lateinit var tv_clouds: TextView
+    private lateinit var img_background: ImageView
 
     private lateinit var tv_temp_min: TextView
     private lateinit var tv_temp_current: TextView
     private lateinit var tv_temp_max: TextView
 
-    // This property is only valid between onCreateView and
-    // onDestroyView.
+    /* This property is only valid between onCreateView and onDestroyView*/
     private val binding get() = _binding!!
 
-    //forecast recyler view
+    /*forecast recyler view*/
     private lateinit var forecastList: RecyclerView
 
+    /*Inflator for theme change*/
+    private lateinit var inflater: LayoutInflater
+
+    /*Fab*/
+    private lateinit var fab: FloatingActionButton
+
+    @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        homeViewModel =
-            ViewModelProvider(this).get(HomeViewModel::class.java)
+        this.inflater = inflater
+
 
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        val textView: TextView = binding.textHome
-        homeViewModel.text.observe(viewLifecycleOwner, Observer {
-            textView.text = it
-        })
+
 
         //initiate location view model
         locationViewModel = ViewModelProvider(this).get(LocationViewModel::class.java)
 
-        //initiate controls
-        //latitude = root.findViewById<TextView>(R.id.latitude)
-        //longtitude = root.findViewById<TextView>(R.id.longitude)
-        //info = root.findViewById<TextView>(R.id.info)
 
         //current weather controls
+        tv_date = root.findViewById<TextView>(R.id.tv_date)
+        tv_location = root.findViewById<TextView>(R.id.tv_location)
         tv_temp = root.findViewById<TextView>(R.id.tv_temp)
         tv_clouds = root.findViewById<TextView>(R.id.tv_clouds)
+        img_background = root.findViewById(R.id.img_weather)
         tv_temp_min = root.findViewById<TextView>(R.id.tv_temp_min)
         tv_temp_current = root.findViewById<TextView>(R.id.tv_temp_current)
         tv_temp_max = root.findViewById<TextView>(R.id.tv_temp_max)
@@ -89,33 +94,64 @@ class HomeFragment : Fragment() {
         forecastList = root.findViewById<RecyclerView>(R.id.forecast_list)
         forecastList.layoutManager = LinearLayoutManager(getContext())
 
+        //fab
+        fab = root.findViewById<FloatingActionButton>(R.id.fab);
+        fab.visibility = View.GONE
+        fab.setOnClickListener{
+            Snackbar.make(it, "Save Favourate Location", Snackbar.LENGTH_LONG)
+            //                .setAction("Action", null).show()
+        }
+
         observerLocationUpdates()
-        observerCurrentWeather()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            observerCurrentWeather()
+        }
         observerForecastWeather()
         return root
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun observerCurrentWeather() {
         //TODO("Not yet implemented")
         locationViewModel.currentLiveData.observe(viewLifecycleOwner, {
-            Log.d("Current Weather", it.get(0)?.clouds.toString())
+            /*set date time*/
+            val current = LocalDateTime.now()
+            val formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
+            val formatted = current.format(formatter)
+            tv_date.text = formatted
             tv_clouds.text = it.get(0)?.weather?.get(0)?.main
             tv_temp.text = it.get(0)?.main?.temp.toString()
             tv_temp_min.text = it.get(0)?.main?.tempMin.toString()
-            tv_temp_current.text = it.get(0)?.main?.tempMin.toString()
+            tv_temp_current.text = it.get(0)?.main?.temp.toString()
             tv_temp_max.text = it.get(0)?.main?.tempMax.toString()
-            //if (it.get(0)?.weather?.get(0)?.main == "Sun") {
+
+            /* we can now save favourate weather locations */
+            fab.visibility = View.VISIBLE
+
+            if (it.get(0)?.weather?.get(0)?.main === "Sun") {
                 //sunny
+                img_background.setImageResource(R.drawable.forest_sunny)
+                val contextThemeWrapper: Context = ContextThemeWrapper(requireContext(), R.style.Theme_WeatherApp_Cloudy)
+                this.inflater.cloneInContext(contextThemeWrapper)
+                var color = resources.getColor(R.color.sunny)
+                binding.root.setBackgroundColor(color)
 
-            //} else if (it.get(0)?.weather?.get(0)?.main == "Clouds"){
+            } else if (it.get(0)?.weather?.get(0)?.main === "Clouds"){
                 //cloudy
+                img_background.setImageResource(R.drawable.forest_cloudy)
+                val contextThemeWrapper: Context = ContextThemeWrapper(requireContext(), R.style.Theme_WeatherApp_Sunny)
+                this.inflater.cloneInContext(contextThemeWrapper)
+                var color = resources.getColor(R.color.cloudy)
+                binding.root.setBackgroundColor(color)
 
-            //}else if (it.get(0)?.weather?.get(0)?.main == "Rain") {
-                // rainny
-
-            //}else{
-
-            //}
+            }else{
+                 //rainny
+                img_background.setImageResource(R.drawable.forest_rainy)
+                val contextThemeWrapper: Context = ContextThemeWrapper(requireContext(), R.style.Theme_WeatherApp_Rain)
+                this.inflater.cloneInContext(contextThemeWrapper)
+                var color = resources.getColor(R.color.rainny)
+                binding.root.setBackgroundColor(color)
+            }
         })
     }
 
@@ -129,15 +165,10 @@ class HomeFragment : Fragment() {
         })
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     private fun observerLocationUpdates() {
         //TODO("Not yet implemented")
         locationViewModel.getLocationData.observe(viewLifecycleOwner, Observer {
-            //longtitude.text = it.longitude.toString()
-            Log.d(TAG,it.longitude.toString())
-            //latitude.text = it.latitude.toString()
-            Log.d(TAG,it.latitude.toString())
-            //info.text = getString(R.string.location_successfully_received)
-            //Log.d(TAG,it.info.toString())
             locationViewModel.loadCurrentWeather(
                 it.latitude.toString(),
                 it.longitude.toString(),

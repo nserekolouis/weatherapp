@@ -12,12 +12,11 @@ import com.google.android.gms.location.LocationServices
 /**
  * Constants Values
  */
+
 const val INTERVAL = 1000L
 const val FASTEST_INTERVAL = 500L
 
-/**
- * Created by Waheed on 03,December,2019
- */
+
 class LocationLiveData(context: Context) : MutableLiveData<Location>() {
 
 

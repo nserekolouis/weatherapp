@@ -2,30 +2,33 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:padding="5dp"
+    >
+
     <TextView
+        android:textColor="@color/white"
         android:id="@+id/tv_day"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Monday"
-        android:textAppearance="@android:style/TextAppearance.Medium"
+        android:textAppearance="@android:style/TextAppearance.Small"
         />
 
-    <TextView
+    <ImageView
         android:layout_centerHorizontal="true"
-        android:id="@+id/tv_icon"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Monday"
-        android:textAppearance="@android:style/TextAppearance.Medium"
+        android:id="@+id/img_icon"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
         />
 
     <TextView
+        android:textColor="@color/white"
         android:layout_alignParentRight="true"
         android:id="@+id/tv_temp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="0 deg"
-        android:textAppearance="@android:style/TextAppearance.Medium"
+        android:textAppearance="@android:style/TextAppearance.Small"
         />
 </RelativeLayout>

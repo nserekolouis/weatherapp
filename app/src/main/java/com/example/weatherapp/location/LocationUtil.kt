@@ -15,9 +15,9 @@ import com.google.android.gms.location.LocationSettingsStatusCodes
 import com.google.android.gms.location.SettingsClient
 
 
-/**
- * Created by Waheed on 03,December,2019
- */
+
+
+const val LOCATION_PERMISSION_REQUEST = 101
 
 class LocationUtil(private val context: Context) {
 
